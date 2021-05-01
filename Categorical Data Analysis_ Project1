@@ -1,0 +1,25 @@
+
+
+###Project 2021.03.10 
+
+##1
+#建立列聯表_1
+q1 =matrix(c(1085,55623,703,441239),nrow =2,byrow =T)
+rownames(q1) =c("no seat belt","seat belt")
+colnames(q1) =c("Fatal","Non-Fatal")
+#列加總
+rt<-margin.table(q1,1)
+#欄加總
+ct<-margin.table(q1,2)
+#併入列加總
+newtable<-cbind(q1,rt)
+#併入欄加總
+newtable<-rbind(newtable,ct)
+
+#建立列聯表_2
+q1_2 =matrix(c(1085,703,55623,441239),nrow =2,
+dimnames=list("Safety Equipment"=c("None","Seat-belt"),"Injury"=c("Fatal","Non-fatal")))
+
+# 分析和檢定
+prop.test(q1_2) ## proportion
+fisher.test(q1_2) ## odds ratio
