@@ -1,0 +1,22 @@
+
+
+#2021/05/05 透過dlookr套件初步探索資料:未完成
+
+#載入套件
+library(dlookr)
+library(dplyr)
+
+#載入套件
+disease.orig<-read.csv("F:/cardio_disease.csv")
+
+#資料概況
+dim(disease.orig)
+str(disease.orig)
+
+diagnose(disease.orig)
+#diagnose(disease.orig,AGE,HEIGHT,HEIGHT,AP_HIGH,AP_LOW)
+
+disease.num<-diagnose_numeric(disease.orig)
+
+#匯出資料
+write.table(disease.num,"F:/diseasenum.csv",sep=",",row.names=T, na = "NA")
