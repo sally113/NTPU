@@ -1,0 +1,66 @@
+
+#2021/05/08 透過dlookr套件初步探索資料:未完成，參考自：R語言信用評分卡：探索性數據分析，原文網址：https://kknews.cc/tech/ybrgpyb.html
+#2021/05/05 透過dlookr套件初步探索資料:未完成
+
+#載入套件
+install.packages("dlookr")
+install.packages("skimr")
+install.packages("visdat")
+install.packages("DataExplorer")
+install.packages("PerformanceAnalytics")
+install.packages("TeX")
+library(dlookr)
+library(dplyr)
+library(skimr)
+library(visdat)
+library(DataExplorer)
+library(PerformanceAnalytics) #看相關係數圖
+library(TeX) #匯出HTML報告
+
+#匯入資料
+disease.orig<-read.csv("D: /cardio_disease.csv")
+
+#資料檢視
+dim(disease.orig)
+str(disease.orig)
+
+
+diagnose.data<-diagnose(disease.orig)
+diagnose(disease.orig)
+#diagnose(disease.orig,AGE,HEIGHT,HEIGHT,AP_HIGH,AP_LOW)
+
+## DataExplorer包plot_bar函數，資料類型不需特別轉成factor
+disease.orig[,'GENDER']<-factor(disease.orig[,'GENDER']) #integer to factor
+disease.orig[,'CHOLESTEROL']<-factor(disease.orig[,'CHOLESTEROL']) #integer to factor
+disease.orig[,'GLUCOSE']<-factor(disease.orig[,'GLUCOSE']) #integer to factor
+disease.orig[,'CARDIO_DISEASE']<-factor(disease.orig[,'CARDIO_DISEASE']) #integer to factor
+disease.orig[,'SMOKE']<-factor(disease.orig[,'SMOKE']) #integer to factor
+disease.orig[,'ALCOHOL']<-factor(disease.orig[,'ALCOHOL']) #integer to factor
+disease.orig[,'PHYSICAL_ACTIVITY']<-factor(disease.orig[,'PHYSICAL_ACTIVITY']) #integer to factor
+class(disease.orig$CHOLESTEROL)
+
+disease.orig[,'CARDIO_DISEASE']<-as.character(disease.orig$CARDIO_DISEASE) #integer to string
+
+disease.num<-diagnose_numeric(disease.orig)
+disease.num
+
+disease.skim<-skim(disease.orig)
+vis_dat(disease.orig)
+plot_density(disease.orig) #DataExplorer包,數值型變量分配觀察
+plot_bar(disease.orig) #DataExplorer包,因子型變量分配觀察
+plot_boxplot(disease.orig,by = "CARDIO_DISEASE") #DataExplorer包,Y變量分配觀察
+plot_correlate(disease.orig) #dlookr包,相關係數矩陣圖
+plot_correlation(disease.orig) #DataExplorer包,相關係數矩陣圖(含數字)
+plot_correlation(disease.orig,type = "c") #DataExplorer包,相關係數矩陣圖(含數字)，只包含連續變量
+disease.orig %>% select_if(is.numeric) %>% chart.Correlation() #PerformanceAnalytics包,
+
+disease.outlier<-diagnose_outlier(disease.orig) #檢查離群值
+
+
+diagnose_report(disease.orig,output_format = "html")
+
+#匯出資料
+write.table(disease.num,"D:/diseasenum.csv",sep=",",row.names=T, na = "NA")
+write.table(diagnose.data,"D:/diagnosedata.csv",sep=",",row.names=T, na = "NA")
+write.table(disease.skim,"D:/diagnoseskim.csv",sep=",",row.names=T, na = "NA")
+write.table(disease.outlier,"D:/diagnoseoutlier.csv",sep=",",row.names=T, na = "NA")
