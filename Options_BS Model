@@ -1,3 +1,18 @@
 
-衍生性金融商品 Options， Futures and Other Derivatives 
-Black-Scholes Model：選擇權定價模型
+##衍生性金融商品 Options， Futures and Other Derivatives 
+#2021/05/12 練習Black & Scholes之選擇權評價模型。資料來源：Python財金應用：Black-Scholes選擇權訂價模型(1)
+
+import numpy as np
+from scipy import stats
+
+S=100       #現貨價格
+K=105       #履約價格
+r=0.01      #無風險利率，一般用銀行定存利率或商業本票之利率
+t=180/252   #到期日
+sigma=0.2   #現貨指數之年波動率，自行估計
+
+d1 = (np.log(S/K) + (r + 0.5*sigma**2)*t)/(sigma*np.sqrt(t))
+d2 = d1-sigma*np.sqrt(t)
+
+Call = S * stats.norm.cdf(d1,0.0,1.0) - K * np.exp(-r*t) * stats.norm.cdf(d2,0.0,1.0)
+Put= K * np.exp(-r*t) * stats.norm.cdf(-d2,0.0,1.0)- S* stats.norm.cdf(-d1,0.0,1.0) 
