@@ -15,4 +15,4 @@ d1 = (np.log(S/K) + (r + 0.5*sigma**2)*t)/(sigma*np.sqrt(t))
 d2 = d1-sigma*np.sqrt(t)
 
 Call = S * stats.norm.cdf(d1,0.0,1.0) - K * np.exp(-r*t) * stats.norm.cdf(d2,0.0,1.0)
-Put= K * np.exp(-r*t) * stats.norm.cdf(-d2,0.0,1.0)- S* stats.norm.cdf(-d1,0.0,1.0) 
+Put= K * np.exp(-r*t) * stats.norm.cdf(-d2,0.0,1.0)- S* stats.norm.cdf(-d1,0.0,1.0)
