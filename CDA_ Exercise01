@@ -1,0 +1,63 @@
+
+
+### Categorical Data Analysis 
+### 21/5/21 練習，案例來源：Contingency Tables in R(https://www.datacamp.com/community/tutorials/contingency-tables-r?utm_source=adwords_ppc&utm_campaignid=1455363063&utm_adgroupid=65083631748&utm_device=c&utm_keyword=&utm_matchtype=b&utm_network=g&utm_adpostion=&utm_creative=278443377095&utm_targetid=aud-392016246653:dsa-429603003980&utm_loc_interest_ms=&utm_loc_physical_ms=9040379&gclid=CjwKCAjwkN6EBhBNEiwADVfyay6lHPaDMkWhZqYBBX0Aw287RGTgMf37o1wBs9Y-eXd06hnYjttICRoCrN0QAvD_BwE)
+
+library(MASS)
+
+str(Cars93)
+dim(Cars93)
+
+Cars93$Type
+
+table(Cars93$Type)
+prop.table(table(Cars93$Type))
+
+
+table(Cars93$Origin)
+
+#contingency table
+(tab1<-table(Cars93$Type,Cars93$Origin))
+
+#marginal 
+rowSums(tab1)
+colSums(tab1)
+
+#percents form contingency table；joint probability distribution
+(tab1<-prop.table(table(Cars93$Type, Cars93$Origin)))
+
+#欄百分比
+(tab2<-prop.table(table(Cars93$Type, Cars93$Origin), margin=2)*100)
+colSums(tab2)
+
+#列百分比
+(tab3<-prop.table(table(Cars93$Type, Cars93$Origin), margin=1)*100)
+rowSums(tab3)
+
+#Chi-squared test
+chisq.test(Cars93$Type, Cars93$Origin)
+
+#Fisher's exact test
+fisher.test(Cars93$Type, Cars93$Origin)
+
+#G-test
+library(DescTools)
+GTest(Cars93$Type, Cars93$Origin)
+
+#Yates' correction
+(tab4<-table(Cars93$Man.trans.avail, Cars93$Origin))
+chisq.test(tab4)
+
+#3 (or more) dimensional table
+table(Cars93$Man.trans.avail, Cars93$Origin, Cars93$Type)
+ftable(Cars93$Man.trans.avail, Cars93$Origin, Cars93$Type)
+
+#Cochran-Mantel-Haenszel test
+mantelhaen.test(Cars93$Man.trans.avail, Cars93$Origin, Cars93$Type)
+
+#Cramer's V
+CramerV(Cars93$Type, Cars93$Origin)
+
+#Goodman and Kruskal lambda
+table(Cars93$Type, Cars93$Origin)
+Lambda(Cars93$Type, Cars93$Origin, direction='row')
