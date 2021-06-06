@@ -1,0 +1,413 @@
+
+
+#2021/06/06 心臟病資料初步分析，邊際機率計算待補；後續需要精簡優化
+#2021/05/08 透過dlookr套件初步探索資料:未完成，參考自：R語言信用評分卡：探索性數據分析，原文網址：https://kknews.cc/tech/ybrgpyb.html
+#2021/05/05 透過dlookr套件初步探索資料:未完成
+
+#載入套件
+
+library(dlookr)#diagnose函數，檢視遺失值和獨特值；diagnose_numeric函數，檢視連續資料統計值；說明：Data quality diagnosis (Choonghyun Ryu,2021)
+library(dplyr)#plot_density函數、group_by函數
+library(skimr)#skim函數，檢視連續資料統計值及分配圖
+library(visdat)#vis_dat函數，資料型態樹狀圖
+library(PerformanceAnalytics) #看相關係數圖
+library(plyr) #ddply函數，計算群組平均數
+library(car) #leveneTest函數，變異數同質性檢定
+library(DataExplorer)#plot_density函數，機率密度圖
+library(ggplot2)#ggplot函數
+
+
+
+##dlookr說明：Data quality diagnosis (Choonghyun Ryu,2021)
+
+#匯入資料
+disease.orig<-read.csv("D:/cardiovascular_diseases_dv3_5000.csv")
+
+#資料檢視
+dim(disease.orig)
+str(disease.orig)
+
+#資料探索
+diagnose.data<-diagnose(disease.orig)
+diagnose(disease.orig)
+#diagnose(disease.orig,AGE,HEIGHT,HEIGHT,AP_HIGH,AP_LOW)
+
+#資料類型轉換成factor
+disease.orig$CARDIO_DISEASE <- as.factor(disease.orig$CARDIO_DISEASE) 
+disease.orig[,'GENDER']<-factor(disease.orig[,'GENDER']) #integer to factor
+disease.orig[,'CHOLESTEROL']<-factor(disease.orig[,'CHOLESTEROL']) #integer to factor
+disease.orig[,'GLUCOSE']<-factor(disease.orig[,'GLUCOSE']) #integer to factor
+disease.orig[,'CARDIO_DISEASE']<-factor(disease.orig[,'CARDIO_DISEASE']) #integer to factor
+disease.orig[,'SMOKE']<-factor(disease.orig[,'SMOKE']) #integer to factor
+disease.orig[,'ALCOHOL']<-factor(disease.orig[,'ALCOHOL']) #integer to factor
+disease.orig[,'PHYSICAL_ACTIVITY']<-factor(disease.orig[,'PHYSICAL_ACTIVITY']) #integer to factor
+disease.orig[,'CARDIO_DISEASE']<-as.character(disease.orig$CARDIO_DISEASE) #integer to string
+
+
+#dlookr資料檢查
+disease.num<-diagnose_numeric(disease.orig)
+disease.num
+disease.skim<-skim(disease.orig) #skimr包，數值型變量分配觀察
+disease.skim
+vis_dat(disease.orig)#visdat包，資料型態樹狀圖
+plot_density(disease.orig) #DataExplorer包,數值型變量機率密度圖
+disease.outlier<-diagnose_outlier(disease.orig) #檢查離群值
+disease.outlier
+plot_outlier(disease.orig) #刪離群值前後比較(直方圖、箱型圖)
+diagnose_report(disease.orig,output_format = "html") #匯出html文件
+
+png("D:/直方圖1.png", width=600, height=600)
+plot_bar(disease.orig) #DataExplorer包,因子型變量分配觀察
+dev.off()
+
+plot_correlate(disease.orig) #dlookr包,相關係數矩陣圖
+plot_correlation(disease.orig) #DataExplorer包,相關係數矩陣圖(含數字)
+plot_correlation(disease.orig,type = "c") #DataExplorer包,相關係數矩陣圖(含數字)，只包含連續變量
+
+png("D:/箱型圖1.png", width=600, height=600)
+plot_boxplot(disease.orig,by = "CARDIO_DISEASE") #DataExplorer包,Y變量分配觀察
+dev.off()
+
+png("D:/相關係數圖1.png", width=600, height=600)
+disease.orig %>% select_if(is.numeric) %>% chart.Correlation() #PerformanceAnalytics包,相關係數圖
+dev.off()
+
+##類別型資料
+
+#長條圖
+#----------------------------------------------------
+stu.GENDER <- as.data.frame(table(disease.orig$GENDER, dnn=c("GENDER")))
+stu.GENDER
+png("D:/GENDER長條圖.png", width=600, height=300)
+g1.GENDER <- ggplot(stu.GENDER, aes(x=GENDER, y=Freq)) + 
+  geom_bar(stat = 'identity', fill='coral') +
+  ylab('Count')+
+  ggtitle('性別') 
+g1.GENDER
+
+#加上數據
+g1.GENDER + geom_text(data=stu.GENDER, aes(x=GENDER, label=Freq), size=8)
+dev.off()
+#----------------------------------------------------------
+#-CHOLESTEROL---------------------------------------------------
+stu.CHOLESTEROL <- as.data.frame(table(disease.orig$CHOLESTEROL, dnn=c("CHOLESTEROL")))
+stu.CHOLESTEROL
+
+png("D:/CHOLESTEROL長條圖.png", width=600, height=300)
+g1.CHOLESTEROL <- ggplot(stu.CHOLESTEROL, aes(x=CHOLESTEROL, y=Freq)) + 
+  geom_bar(stat = 'identity', fill='coral') +
+  ylab('Count')+
+  ggtitle('膽固醇') 
+g1.CHOLESTEROL
+
+#加上數據
+g1.CHOLESTEROL + geom_text(data=stu.CHOLESTEROL, aes(x=CHOLESTEROL, label=Freq), size=5)
+dev.off()
+
+#----------------------------------------------------------
+#-GLUCOSE---------------------------------------------------
+stu.GLUCOSE <- as.data.frame(table(disease.orig$GLUCOSE, dnn=c("GLUCOSE")))
+stu.GLUCOSE
+png("D:/GLUCOSE長條圖.png", width=600, height=300)
+g1.GLUCOSE <- ggplot(stu.GLUCOSE, aes(x=GLUCOSE, y=Freq)) + 
+  geom_bar(stat = 'identity', fill='coral') +
+  ylab('Count')+
+  ggtitle('葡萄糖') 
+g1.GLUCOSE
+
+#加上數據
+g1.GLUCOSE + geom_text(data=stu.GLUCOSE, aes(x=GLUCOSE, label=Freq), size=5)
+dev.off()
+#----------------------------------------------------------
+#-SMOKE---------------------------------------------------
+stu.SMOKE <- as.data.frame(table(disease.orig$SMOKE, dnn=c("SMOKE")))
+stu.SMOKE
+png("D:/SMOKE長條圖.png", width=600, height=300)
+g1.SMOKE <- ggplot(stu.SMOKE, aes(x=SMOKE, y=Freq)) + 
+  geom_bar(stat = 'identity', fill='coral') +
+  ylab('Count')+
+  ggtitle('抽菸') 
+g1.SMOKE
+
+#加上數據
+g1.SMOKE + geom_text(data=stu.SMOKE, aes(x=SMOKE, label=Freq), size=5)
+dev.off()
+#----------------------------------------------------------
+#-ALCOHOL---------------------------------------------------
+stu.ALCOHOL <- as.data.frame(table(disease.orig$ALCOHOL, dnn=c("ALCOHOL")))
+stu.ALCOHOL
+png("D:/ALCOHOL長條圖.png", width=600, height=300)
+g1.ALCOHOL <- ggplot(stu.ALCOHOL, aes(x=ALCOHOL, y=Freq)) + 
+  geom_bar(stat = 'identity', fill='coral') +
+  ylab('Count')+
+  ggtitle('飲酒') 
+g1.ALCOHOL
+
+#加上數據
+g1.ALCOHOL + geom_text(data=stu.ALCOHOL, aes(x=ALCOHOL, label=Freq), size=5)
+dev.off()
+#----------------------------------------------------------
+#-PHYSICAL_ACTIVITY---------------------------------------------------
+stu.PHYSICAL_ACTIVITY <- as.data.frame(table(disease.orig$PHYSICAL_ACTIVITY, dnn=c("PHYSICAL_ACTIVITY")))
+stu.PHYSICAL_ACTIVITY
+png("D:/PHYSICAL_ACTIVITY長條圖.png", width=600, height=300)
+g1.PHYSICAL_ACTIVITY <- ggplot(stu.PHYSICAL_ACTIVITY, aes(x=PHYSICAL_ACTIVITY, y=Freq)) + 
+  geom_bar(stat = 'identity', fill='coral') +
+  ylab('Count')+
+  ggtitle('運動習慣') 
+g1.PHYSICAL_ACTIVITY
+
+#加上數據
+g1.PHYSICAL_ACTIVITY + geom_text(data=stu.PHYSICAL_ACTIVITY, aes(x=PHYSICAL_ACTIVITY, label=Freq), size=5)
+dev.off()
+#----------------------------------------------------------
+#-CARDIO_DISEASE---------------------------------------------------
+stu.CARDIO_DISEASE <- as.data.frame(table(disease.orig$CARDIO_DISEASE, dnn=c("CARDIO_DISEASE")))
+stu.CARDIO_DISEASE
+png("D:/CARDIO_DISEASE長條圖.png", width=600, height=300)
+g1.CARDIO_DISEASE <- ggplot(stu.CARDIO_DISEASE, aes(x=CARDIO_DISEASE, y=Freq)) + 
+  geom_bar(stat = 'identity', fill='coral') +
+  ylab('Count')+
+  ggtitle('心臟病') 
+g1.CARDIO_DISEASE
+
+#加上數據
+g1.CARDIO_DISEASE + geom_text(data=stu.CARDIO_DISEASE, aes(x=CARDIO_DISEASE, label=Freq), size=5)
+dev.off()
+#----------------------------------------------------------
+
+#累積長條圖+百分比參考，之後可參考 https://ithelp.ithome.com.tw/articles/10209002
+
+
+png("D:/心臟病之性別差異累積長條圖.png", width=600, height=600)
+ggplot(disease.orig, aes(x = GENDER, fill = CARDIO_DISEASE)) + 
+  geom_bar(position = "fill") + ggtitle('心臟病之性別差異') 
+dev.off()
+
+
+png("D:/心臟病之膽固醇差異累積長條圖.png", width=600, height=600)
+ggplot(disease.orig, aes(x = CHOLESTEROL, fill = CARDIO_DISEASE)) + 
+  geom_bar(position = "fill") + ggtitle('心臟病之膽固醇差異') 
+dev.off()
+
+
+png("D:/心臟病之葡萄糖差異累積長條圖.png", width=600, height=600)
+ggplot(disease.orig, aes(x = GLUCOSE, fill = CARDIO_DISEASE)) + 
+  geom_bar(position = "fill") + ggtitle('心臟病之葡萄糖差異') 
+dev.off()
+
+
+png("D:/心臟病之抽菸差異累積長條圖.png", width=600, height=600)
+ggplot(disease.orig, aes(x = SMOKE, fill = CARDIO_DISEASE)) + 
+  geom_bar(position = "fill") + ggtitle('心臟病之抽菸差異') 
+dev.off()
+
+
+png("D:/心臟病之飲酒差異累積長條圖.png", width=600, height=600)
+ggplot(disease.orig, aes(x = ALCOHOL, fill = CARDIO_DISEASE)) + 
+  geom_bar(position = "fill") + ggtitle('心臟病之飲酒差異') 
+dev.off()
+
+
+png("D:/心臟病之運動習慣差異累積長條圖.png", width=600, height=600)
+ggplot(disease.orig, aes(x = PHYSICAL_ACTIVITY, fill = CARDIO_DISEASE)) + 
+  geom_bar(position = "fill") + ggtitle('心臟病之運動習慣差異') 
+dev.off()
+
+
+
+#類別比例
+prop.table(table(disease.orig$GENDER))
+prop.table(table(disease.orig$CHOLESTEROL))
+prop.table(table(disease.orig$GLUCOSE))
+prop.table(table(disease.orig$SMOKE))
+prop.table(table(disease.orig$ALCOHOL))
+prop.table(table(disease.orig$PHYSICAL_ACTIVITY))
+prop.table(table(disease.orig$CARDIO_DISEASE))
+
+
+#交叉表
+table(disease.orig$CARDIO_DISEASE,disease.orig$CHOLESTEROL)
+table(disease.orig$CARDIO_DISEASE,disease.orig$GLUCOSE)
+table(disease.orig$CARDIO_DISEASE,disease.orig$SMOKE)
+table(disease.orig$CARDIO_DISEASE,disease.orig$ALCOHOL)
+table(disease.orig$CARDIO_DISEASE,disease.orig$PHYSICAL_ACTIVITY)
+
+
+##交叉表比例--
+
+
+
+#卡方檢定
+chisq.test(table(disease.orig$CARDIO_DISEASE,disease.orig$GENDER))
+chisq.test(table(disease.orig$CARDIO_DISEASE,disease.orig$CHOLESTEROL))
+chisq.test(table(disease.orig$CARDIO_DISEASE,disease.orig$GLUCOSE))
+chisq.test(table(disease.orig$CARDIO_DISEASE,disease.orig$SMOKE))
+chisq.test(table(disease.orig$CARDIO_DISEASE,disease.orig$ALCOHOL))
+chisq.test(table(disease.orig$CARDIO_DISEASE,disease.orig$PHYSICAL_ACTIVITY))
+
+
+##連續型資料
+
+#檢定變異數是否相等(若P值夠小，代表變異數不相等)
+leveneTest(disease.orig$AGE ~ disease.orig$CARDIO_DISEASE,center='mean')
+t.test(disease.orig$AGE ~ disease.orig$CARDIO_DISEASE,var.equal=FALSE)
+
+leveneTest(disease.orig$HEIGHT ~ disease.orig$CARDIO_DISEASE,center='mean')
+t.test(disease.orig$HEIGHT ~ disease.orig$CARDIO_DISEASE,var.equal=TRUE)
+
+leveneTest(disease.orig$WEIGHT ~ disease.orig$CARDIO_DISEASE,center='mean')
+t.test(disease.orig$WEIGHT ~ disease.orig$CARDIO_DISEASE,var.equal=FALSE)
+
+leveneTest(disease.orig$AP_HIGH ~ disease.orig$CARDIO_DISEASE,center='mean')
+t.test(disease.orig$AP_HIGH ~ disease.orig$CARDIO_DISEASE,var.equal=FALSE)
+
+leveneTest(disease.orig$AP_LOW ~ disease.orig$CARDIO_DISEASE,center='mean')
+t.test(disease.orig$AP_LOW ~ disease.orig$CARDIO_DISEASE,var.equal=FALSE)
+
+#箱型圖
+---AGE
+mu <- ddply(disease.orig, "CARDIO_DISEASE", summarise, grp.mean=mean(AGE))
+
+png("F:/類別資料分析/報告資料/TEMP/AGE直方圖.png", width=600, height=300)
+p<-ggplot(disease.orig, aes(x=AGE, color=CARDIO_DISEASE)) +
+  geom_histogram(position="identity", alpha=0.5,bins = 20)
+p
+p + theme(legend.position="top")+geom_vline(data=mu, aes(xintercept=grp.mean, color=CARDIO_DISEASE),
+                                            linetype="dashed")
+
+dev.off()
+
+----HEIGHT
+
+mu <- ddply(disease.orig, "CARDIO_DISEASE", summarise, grp.mean=mean(HEIGHT))
+
+
+png("F:/類別資料分析/報告資料/TEMP/HEIGHT直方圖.png", width=600, height=300)
+p<-ggplot(disease.orig, aes(x=HEIGHT, color=CARDIO_DISEASE)) +
+  geom_histogram(position="identity", alpha=0.5,bins = 20)
+p
+p + theme(legend.position="top")+geom_vline(data=mu, aes(xintercept=grp.mean, color=CARDIO_DISEASE),
+                                            linetype="dashed")
+
+dev.off()
+
+---WEIGHT
+mu <- ddply(disease.orig, "CARDIO_DISEASE", summarise, grp.mean=mean(WEIGHT))
+
+
+png("F:/類別資料分析/報告資料/TEMP/WEIGHT直方圖.png", width=600, height=300)
+p<-ggplot(disease.orig, aes(x=WEIGHT, color=CARDIO_DISEASE)) +
+  geom_histogram(position="identity", alpha=0.5,bins = 20)
+p
+p + theme(legend.position="top")+geom_vline(data=mu, aes(xintercept=grp.mean, color=CARDIO_DISEASE),
+                                            linetype="dashed")
+
+dev.off()
+
+
+---AP_HIGH
+mu <- ddply(disease.orig, "CARDIO_DISEASE", summarise, grp.mean=mean(AP_HIGH))
+png("F:/類別資料分析/報告資料/TEMP/AP_HIGH直方圖.png", width=600, height=300)
+p<-ggplot(disease.orig, aes(x=AP_HIGH, color=CARDIO_DISEASE)) +
+  geom_histogram(position="identity", alpha=0.5,bins = 20)
+p
+p + theme(legend.position="top")+geom_vline(data=mu, aes(xintercept=grp.mean, color=CARDIO_DISEASE),
+                                            linetype="dashed")
+dev.off()
+
+---AP_LOW
+
+mu <- ddply(disease.orig, "CARDIO_DISEASE", summarise, grp.mean=mean(AP_LOW))
+png("F:/類別資料分析/報告資料/TEMP/AP_LOW直方圖.png", width=600, height=300)
+p<-ggplot(disease.orig, aes(x=AP_LOW, color=CARDIO_DISEASE)) +
+  geom_histogram(position="identity", alpha=0.5,bins = 20)
+p
+p + theme(legend.position="top")+geom_vline(data=mu, aes(xintercept=grp.mean, color=CARDIO_DISEASE),
+                                            linetype="dashed")
+dev.off()
+
+
+
+---AGE
+
+png("F:/類別資料分析/報告資料/TEMP/AGE箱型圖.png", width=600, height=600)
+qplot(x=CARDIO_DISEASE,                               
+      y=AGE,
+      data=disease.orig,                     
+      geom="boxplot",       # 圖形=boxplot
+      xlab="CARDIO_DISEASE",                          
+      color= CARDIO_DISEASE)
+dev.off()
+
+----HEIGHT
+png("F:/類別資料分析/報告資料/TEMP/HEIGHT箱型圖.png", width=600, height=600)
+qplot(x=CARDIO_DISEASE,                               
+      y=HEIGHT,
+      data=disease.orig,                     
+      geom="boxplot",       # 圖形=boxplot
+      xlab="CARDIO_DISEASE",                          
+      color= CARDIO_DISEASE)
+dev.off()
+
+
+
+----WEIGHT
+
+png("F:/類別資料分析/報告資料/TEMP/WEIGHT箱型圖.png", width=600, height=600)
+qplot(x=CARDIO_DISEASE,                               
+      y=WEIGHT,
+      data=disease.orig,                     
+      geom="boxplot",       # 圖形=boxplot
+      xlab="CARDIO_DISEASE",                          
+      color= CARDIO_DISEASE)
+dev.off()
+
+---AP_HIGH
+
+png("F:/類別資料分析/報告資料/TEMP/AP_HIGH箱型圖.png", width=600, height=600)
+qplot(x=CARDIO_DISEASE,                               
+      y=AP_HIGH,
+      data=disease.orig,                     
+      geom="boxplot",       # 圖形=boxplot
+      xlab="CARDIO_DISEASE",                          
+      color= CARDIO_DISEASE)
+dev.off()
+
+---AP_LOW
+
+png("F:/類別資料分析/報告資料/TEMP/AP_LOW型圖.png", width=600, height=600)
+qplot(x=CARDIO_DISEASE,                               
+      y=AP_LOW,
+      data=disease.orig,                     
+      geom="boxplot",       # 圖形=boxplot
+      xlab="CARDIO_DISEASE",                          
+      color= CARDIO_DISEASE)
+dev.off()
+
+
+#匯出資料
+write.table(disease.outlier,"D:/diseaseoutlier.csv",sep=",",row.names=T, na = "NA") #刪離群值
+write.table(disease.num,"D:/diseasenum.csv",sep=",",row.names=T, na = "NA") #匯出連續變數基本統計量
+
+#--------------沒有用到，一起記錄下來------------
+
+#機率密度圖
+plot_density(disease.orig) #DataExplorer包,數值型變量分配觀察
+#計算群組平均數
+AGEmu <- ddply(disease.orig, "CARDIO_DISEASE", summarise, grp.mean=mean(AGE)) #計算群組平均數
+AGEmu
+
+##AGE未分組
+qplot(disease.orig$AGE, geom="histogram")
+
+##AGE分6組
+qplot(disease.orig$AGE,
+      geom="histogram",
+      binwidth = 5,  
+      main = "Histogram for Age", 
+      xlab = "Age",  
+      fill=I("blue"), 
+      col=I("red"), 
+      alpha=I(.2),
+      xlim=c(30,70))
